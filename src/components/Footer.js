@@ -41,7 +41,7 @@ export default function Footer() {
           © {new Date().getFullYear()} Travel Unbounded. All rights reserved.
         </div>
         <div className="text-xs text-gray-500">
-          Designed with <span className="text-accent">♥</span> for real travelers.
+          Designed with <span className="text-accent">♥</span> for real travelers. Built by <a href="mailto:boddushivasai@gmail.com" className="hover:text-white transition">boddushivasai@gmail.com</a>.
         </div>
       </div>
     </footer>

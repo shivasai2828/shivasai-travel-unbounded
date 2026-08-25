@@ -20,7 +20,7 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative flex h-[90vh] min-h-[600px] items-center justify-center overflow-hidden bg-brand-dark">
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-dark">
         <div className="absolute inset-0 z-0">
           <Image
             src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1600&q=80"
@@ -37,7 +37,7 @@ export default function HomePage() {
             <span className="inline-flex items-center gap-2 rounded-full glass-panel px-4 py-1.5 text-sm font-semibold tracking-wider text-accent mb-6 uppercase">
               <Compass size={16} /> Discover The Unseen
             </span>
-            <h1 className="text-5xl font-extrabold leading-tight tracking-tight md:text-7xl lg:text-8xl drop-shadow-xl">
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight md:text-6xl lg:text-7xl drop-shadow-xl">
               Travel <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-yellow-300">Unbounded</span>
             </h1>
