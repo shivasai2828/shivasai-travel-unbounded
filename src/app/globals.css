@@ -31,6 +31,14 @@ body {
   color: var(--foreground);
 }
 
+button, [role="button"] {
+  cursor: pointer;
+}
+
+button:disabled, [role="button"]:disabled {
+  cursor: not-allowed;
+}
+
 /* Glassmorphism utility */
 .glass-panel {
   background: rgba(255, 255, 255, 0.7);

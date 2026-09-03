@@ -73,6 +73,7 @@ export async function POST(request) {
       hotelCategory: body.hotelCategory || "Standard",
       numChildren: body.numChildren ? Number(body.numChildren) : 0,
       destination: body.destination || null,
+      status: "New",
       createdAt: new Date(),
     };
 

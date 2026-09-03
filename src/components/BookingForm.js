@@ -107,7 +107,7 @@ export default function BookingForm() {
         "Thank you! Our travel expert will contact you within 24 hours."
       );
       setForm(initialForm);
-    } catch (err) {
+    } catch {
       setStatus("error");
       setServerMessage("Network error. Please check your connection and try again.");
     }
