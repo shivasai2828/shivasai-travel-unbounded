@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GEMINI_MODEL = "gemini-3.5-flash";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 const SYSTEM_PROMPT = "You are \"Aura\", the expert AI Travel Concierge for \"Travel Unbounded\" — India's most trusted experiential travel company.\n" +
 "Your mission is to help travelers design bespoke, unforgettable journeys.\n\n" +
@@ -73,10 +73,25 @@ function inferDestination(allText) {
 }
 
 function inferDuration(allText) {
+  // Match "X days" or "X nights"
   const daysMatch = allText.match(/(\d+)\s*(?:days?|nights?)/);
   if (daysMatch) return `${daysMatch[1]} Days`;
-  if (allText.includes("week")) return "7 Days";
-  if (allText.includes("weekend")) return "3 Days";
+  // Match "X months" → convert to approx days
+  const monthsMatch = allText.match(/(\d+)\s*months?/);
+  if (monthsMatch) return `${parseInt(monthsMatch[1]) * 30} Days (~${monthsMatch[1]} month)`;
+  // Match "X weeks"
+  const weeksMatch = allText.match(/(\d+)\s*weeks?/);
+  if (weeksMatch) return `${parseInt(weeksMatch[1]) * 7} Days`;
+  if (allText.includes("a month") || allText.includes("one month") || allText.includes("1 month")) return "30 Days (~1 month)";
+  if (allText.includes("fortnight") || allText.includes("two weeks") || allText.includes("2 weeks")) return "14 Days";
+  if (allText.includes("week") || allText.includes("a week") || allText.includes("one week")) return "7 Days";
+  if (allText.includes("weekend") || allText.includes("2 days") || allText.includes("3 days")) return "3 Days";
+  // Accept a bare number (2-30) as days when no unit is given
+  const bareNum = allText.match(/^\s*(\d{1,2})\s*$/);
+  if (bareNum) {
+    const n = parseInt(bareNum[1]);
+    if (n >= 1 && n <= 30) return `${n} Days`;
+  }
   return null;
 }
 
@@ -202,7 +217,9 @@ function isRelevantDestination(text) {
 }
 
 function isRelevantDuration(text) {
-  return /\d+\s*(?:days?|nights?|weeks?)|week|weekend|fortnight/.test(text);
+  // Accept number+unit, plain words, OR a bare number 1-30 (user answering "how many days?" with just "4")
+  return /\d+\s*(?:days?|nights?|weeks?|months?)|a\s+month|one\s+month|a\s+week|one\s+week|fortnight|two\s+weeks?|weekend/.test(text)
+    || /^\s*\d{1,2}\s*$/.test(text); // bare number like "4", "7"
 }
 
 function isRelevantTravelers(text) {
@@ -364,34 +381,40 @@ export async function POST(request) {
       );
     }
 
-    const groqApiKey = process.env.GROQ_API_KEY;
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    const groqApiKey = process.env.GROQ_API_KEY; // kept for reference but not used
+    console.log("[Chat API] Gemini key present:", !!geminiApiKey);
 
-    // 1. Call Groq Cloud if API key is available
-    if (groqApiKey) {
+    // 1. Call Google Gemini if API key is available
+    if (geminiApiKey) {
       try {
-        const groqResponse = await fetch(GROQ_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${groqApiKey}`,
-          },
-          body: JSON.stringify({
-            model: GROQ_MODEL,
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              ...messages.map((m) => ({
-                role: m.role === "assistant" ? "assistant" : "user",
-                content: m.content,
-              })),
-            ],
-            temperature: 0.7,
-            max_tokens: 2000,
-          }),
-        });
+        // Convert messages to Gemini contents format (alternating user/model)
+        const contents = messages.map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        }));
 
-        if (groqResponse.ok) {
-          const data = await groqResponse.json();
-          const reply = data.choices?.[0]?.message?.content;
+        const geminiResponse = await fetch(
+          `${GEMINI_API_URL}?key=${geminiApiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: {
+                parts: [{ text: SYSTEM_PROMPT }],
+              },
+              contents,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 2000,
+              },
+            }),
+          }
+        );
+
+        if (geminiResponse.ok) {
+          const data = await geminiResponse.json();
+          const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
           if (reply) {
             let parsedItinerary = null;
@@ -403,7 +426,7 @@ export async function POST(request) {
                   parsedItinerary = parsed;
                 }
               } catch (e) {
-                console.warn("Could not parse JSON block from Groq reply:", e);
+                console.warn("Could not parse JSON block from Gemini reply:", e);
               }
             }
 
@@ -416,11 +439,11 @@ export async function POST(request) {
             });
           }
         } else {
-          const errBody = await groqResponse.text();
-          console.warn("Groq API returned non-200:", groqResponse.status, errBody);
+          const errBody = await geminiResponse.text();
+          console.warn("Gemini API returned non-200:", geminiResponse.status, errBody);
         }
-      } catch (groqErr) {
-        console.error("Groq API request failed:", groqErr);
+      } catch (geminiErr) {
+        console.error("Gemini API request failed:", geminiErr);
       }
     }
 

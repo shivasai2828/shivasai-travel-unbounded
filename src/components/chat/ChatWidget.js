@@ -42,70 +42,82 @@ const QUICK_REPLIES_BY_PHASE = {
 };
 
 function getQuickReplies(messages) {
-  // Detect phase from the LAST ASSISTANT message (what question is being asked right now)
+  // Detect phase from the LAST ASSISTANT message
   const lastBotMsg = [...messages].reverse().find(m => m.role === "assistant");
   const botText = (lastBotMsg?.content || "").toLowerCase();
 
-  // Match the bot's current question to return the right option chips
-  if (
-    botText.includes("kind of") ||
-    botText.includes("experience") ||
-    botText.includes("dreaming of") ||
-    botText.includes("destination") ||
-    botText.includes("mountains") ||
-    botText.includes("beaches") ||
-    botText.includes("backwaters")
-  ) return QUICK_REPLIES_BY_PHASE.destination;
+  // ── Check what the bot is currently ASKING (look for the question part) ──
 
+  // DATES question (check early — "when" is unambiguous)
   if (
-    botText.includes("how many days") ||
-    botText.includes("how long") ||
-    botText.includes("many days") ||
-    botText.includes("number of days")
-  ) return QUICK_REPLIES_BY_PHASE.duration;
+    botText.includes("when are you") ||
+    botText.includes("when do you") ||
+    botText.includes("when would you") ||
+    botText.includes("travel date") ||
+    (botText.includes("month") && (botText.includes("plan") || botText.includes("travel") || botText.includes("prefer"))) ||
+    (botText.includes("season") && botText.includes("mind")) ||
+    botText.includes("flexible with date")
+  ) return QUICK_REPLIES_BY_PHASE.dates;
 
+  // INTERESTS question (check before budget — Gemini often says "Deluxe... Do you have any interests?")
+  if (
+    (botText.includes("activities") && (botText.includes("must") || botText.includes("specific") || botText.includes("any"))) ||
+    (botText.includes("interests") && (botText.includes("must") || botText.includes("specific") || botText.includes("any"))) ||
+    botText.includes("must-have") ||
+    (botText.includes("photography") && botText.includes("?")) ||
+    (botText.includes("trekking") && botText.includes("?")) ||
+    botText.includes("birdwatch") ||
+    botText.includes("nature walk") ||
+    botText.includes("water sports")
+  ) return QUICK_REPLIES_BY_PHASE.interests;
+
+  // BUDGET question (only when bot is ASKING about style/accommodation — not just acknowledging)
+  if (
+    (botText.includes("preferred") && (botText.includes("style") || botText.includes("accommodation"))) ||
+    (botText.includes("standard") && botText.includes("deluxe") && botText.includes("luxury")) ||
+    botText.includes("budget level") ||
+    botText.includes("travel style")
+  ) return QUICK_REPLIES_BY_PHASE.budget;
+
+  // TRAVELERS question
   if (
     botText.includes("who will be") ||
-    botText.includes("who is traveling") ||
+    botText.includes("who is travel") ||
     botText.includes("traveling solo") ||
     botText.includes("as a couple") ||
     botText.includes("with family") ||
     botText.includes("group of friends") ||
-    botText.includes("joining you")
+    botText.includes("joining you") ||
+    botText.includes("who will join")
   ) return QUICK_REPLIES_BY_PHASE.travelers;
 
+  // DURATION question
   if (
-    botText.includes("preferred") && (botText.includes("style") || botText.includes("accommodation")) ||
-    botText.includes("standard") ||
-    botText.includes("deluxe") ||
-    botText.includes("luxury") ||
-    botText.includes("budget level")
-  ) return QUICK_REPLIES_BY_PHASE.budget;
+    botText.includes("how many days") ||
+    botText.includes("how long") ||
+    botText.includes("many days") ||
+    botText.includes("number of days") ||
+    botText.includes("how much time")
+  ) return QUICK_REPLIES_BY_PHASE.duration;
 
+  // DESTINATION question
   if (
-    botText.includes("activities") ||
-    botText.includes("interests") ||
-    botText.includes("must-have") ||
-    botText.includes("photography") ||
-    botText.includes("trekking") ||
-    botText.includes("water sports")
-  ) return QUICK_REPLIES_BY_PHASE.interests;
-
-  if (
-    botText.includes("when") ||
-    botText.includes("travel date") ||
-    botText.includes("month") ||
-    botText.includes("season") ||
-    botText.includes("flexible")
-  ) return QUICK_REPLIES_BY_PHASE.dates;
+    botText.includes("kind of") ||
+    botText.includes("dreaming of") ||
+    botText.includes("type of experience") ||
+    botText.includes("type of travel") ||
+    (botText.includes("destination") && botText.includes("?")) ||
+    (botText.includes("mountains") && botText.includes("beaches") && botText.includes("?")) ||
+    botText.includes("what kind")
+  ) return QUICK_REPLIES_BY_PHASE.destination;
 
   // Fallback: infer from USER messages only (not bot text to avoid false positives)
   const userText = messages.filter(m => m.role === "user").map(m => m.content).join(" ").toLowerCase();
   const hasDest = /kerala|kenya|himachal|ladakh|andaman|goa|vietnam|tanzania|iceland|mountain|beach|wildlife|backwater/.test(userText);
-  const hasDuration = /\d+\s*days?|week|weekend/.test(userText);
+  const hasDuration = /\d+\s*days?|week|weekend|\d+\s*month/.test(userText);
   const hasTravelers = /solo|couple|family|friends|adults?/.test(userText);
   const hasBudget = /standard|deluxe|luxury/.test(userText);
-  const hasInterests = /wildlife|photography|trek|yoga|cuisine|culture|water sport|adventure/.test(userText);
+  const hasInterests = /wildlife|photography|trek|yoga|cuisine|culture|water sport|adventure|birdwatch/.test(userText);
   if (!hasDest) return QUICK_REPLIES_BY_PHASE.destination;
   if (!hasDuration) return QUICK_REPLIES_BY_PHASE.duration;
   if (!hasTravelers) return QUICK_REPLIES_BY_PHASE.travelers;
