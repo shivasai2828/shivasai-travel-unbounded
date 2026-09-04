@@ -7,7 +7,7 @@ India's Most Trusted Experiential Travel Experts — Handcrafted journeys across
 ## 🌟 Key Features
 
 ### 1. 🤖 AI Travel Chatbot ("Aura Concierge")
-- **AI Provider**: Powered server-side by **Groq Cloud API** (`llama-3.3-70b-versatile` / `llama-3.1-8b-instant`).
+- **AI Provider**: Powered server-side by **Google Gemini API** (`gemini-2.0-flash` / `gemini-1.5-flash`).
 - **Natural Multi-Turn Planning**: Asks targeted questions over conversational turns to gather destination preferences, duration, travel party, budget style (Standard / Deluxe / Luxury), and special interests.
 - **Interactive Day-Wise Itinerary Cards**: When enough details are gathered, the AI generates a structured day-by-day itinerary complete with daily activities, highlight badges, and travel curator tips.
 - **Smart Actions**:
@@ -15,8 +15,8 @@ India's Most Trusted Experiential Travel Experts — Handcrafted journeys across
   - **"Copy Itinerary"**: Copies the formatted trip plan to clipboard.
   - **"Start Over"**: Resets the chat to plan another trip.
 - **Floating Launcher**: Accessible in the bottom-right corner across all public pages (automatically hidden on admin views).
-- **Secure Server-Side Execution**: All Groq AI calls are performed exclusively in server route handlers (`POST /api/chat`) with zero client-side key exposure.
-- **Zero-Friction Fallback**: Includes an intelligent fallback generator so the evaluator can test full multi-turn flows even before providing a custom `GROQ_API_KEY`.
+- **Secure Server-Side Execution**: All Gemini AI calls are performed exclusively in server route handlers (`POST /api/chat`) with zero client-side key exposure.
+- **Zero-Friction Fallback**: Includes an intelligent fallback generator so the evaluator can test full multi-turn flows even before providing a custom `GEMINI_API_KEY`.
 
 ### 2. 🔐 Admin Dashboard & JWT Authentication
 - **Custom JWT + MongoDB Session**: Password hashing via `bcryptjs` and session tokens in secure `httpOnly` cookies (`admin_token`).
@@ -50,7 +50,7 @@ India's Most Trusted Experiential Travel Experts — Handcrafted journeys across
 | **Animations** | Framer Motion |
 | **Database** | MongoDB Node.js driver (with cached dev connection) |
 | **Auth** | Custom JWT (`jose`) + `bcryptjs` |
-| **AI Integration** | Groq Cloud API (`llama-3.3-70b-versatile`) |
+| **AI Integration** | Google Gemini API (`gemini-2.0-flash`) |
 | **Charts** | Recharts (Area, Donut/Pie, Bar) |
 | **Icons** | Lucide React |
 
@@ -68,8 +68,8 @@ MONGODB_DB=travel_unbounded
 # JWT Secret for Admin Session
 JWT_SECRET=travel-unbounded-secure-admin-jwt-key-2026
 
-# Groq AI API Key (Get a free key from https://console.groq.com)
-GROQ_API_KEY=gsk_your_groq_api_key_here
+# Gemini AI API Key (Get a free key from https://aistudio.google.com/apikey)
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # Base URL for server-side fetches
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
